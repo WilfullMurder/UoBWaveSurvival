@@ -1,0 +1,37 @@
+28/10/2021 -- Project start:
+
+Decided to program a Hitscan weapon as one of six projects for a university module.
+
+Created SurvivalGameCharacter class inheriting from ACharacter UE4 class.
+Declared and initialized UCameraComponent and USpringArmComponent as well as several public and protected member functions && variables.
+
+Hooked up various axis functions related to movement:
+MoveForward(float Value), MoveRight(float Value)
+
+Hooked up various Action Functions related to Combat:
+StartFire(), CeaseFire(), BeginCrouch(), EndCrouch(), Fire(), Jump()
+
+Implemented the built in Event binding within the PlayerInputComponent->SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) 
+using the BindAxis and BindAction delegates.
+
+
+Created SurvivalWeapon class inheriting from AActor UE4 class.
+Declared and initialized USkeletalMeshComponent and several public and protected member functions && variables.
+
+Most importantly:
+struct FHitScanTrace containing the information of a single hitscan weapon linetrace:
+TEnumAsByte<EPhysicalSurface>, FVector_NetQuantize.
+
+Initialize TimeBetweenShots in SurvivalWeapon->BeginPlay(). Variable is accessible in class defaults to allow for adjustments in each individual child.
+SurvivalWeapon->StartFire(), SurvivalWeapon->CeaseFire() Create and destroy a looping timer calling SurvivalWeapon->Fire() respectively
+
+Built the LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams) in SurvivalWeapon->Fire(). 
+
+Called SurvivalWeapon* CurrentWeapon->StartFire(), CurrentWeapon->CeaseFire() in SurvivalGameCharacter->StartFire(), SurvivalGameCharacter->CeaseFire().
+
+Declared ParticleSystems in SurvivalWeapon (set in editor).
+Initialized PlayImpactEffects(EPhysicalSurfaceType, FVector ImpactPoint) && PlayeFireEffects(FVectorTraceEnd) to Spawn article effects.
+
+Checked LineTrace works (INSERTLINKTOYOUTUBEVIDEO).
+
+Created Repo before adding ParticleEffects.
