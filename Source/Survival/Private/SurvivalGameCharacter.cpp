@@ -33,7 +33,11 @@ ASurvivalGameCharacter::ASurvivalGameCharacter()
 
 	WeaponAttachSocketName = "WeaponSocket";
 
+	bReplicates = true;
+
 }
+
+
 
 // Called when the game starts or when spawned
 void ASurvivalGameCharacter::BeginPlay()
@@ -43,16 +47,23 @@ void ASurvivalGameCharacter::BeginPlay()
 	DefaultFOV = CameraComponent->FieldOfView;
 	//HealthComp->OnHealthChanged.AddDynamic(this, &ASCharacter::OnHealthChanged);
 
-	// Spawn a default weapon
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	CurrentWeapon = GetWorld()->SpawnActor<ASurvivalWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
-	if (CurrentWeapon)
+	if (GetLocalRole() == ROLE_Authority)
 	{
-		CurrentWeapon->SetOwner(this);
-		CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
+		// Spawn a default weapon
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		CurrentWeapon = GetWorld()->SpawnActor<ASurvivalWeapon>(StarterWeaponClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams);
+		if (CurrentWeapon)
+		{
+			CurrentWeapon->SetOwner(this);
+			CurrentWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, WeaponAttachSocketName);
+		}
+
+		HealthComponent->OnHealthChanged.AddDynamic(this, &ASurvivalGameCharacter::OnHealthChanged);
 	}
+
+	
 	
 }
 
@@ -167,3 +178,11 @@ void ASurvivalGameCharacter::CeaseFire()
 	}
 }
 
+void ASurvivalGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ASurvivalGameCharacter, CurrentWeapon);
+	DOREPLIFETIME(ASurvivalGameCharacter, bDied);
+
+}

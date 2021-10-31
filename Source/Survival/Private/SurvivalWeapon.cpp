@@ -9,6 +9,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Survival/Survival.h"
+#include "Camera/CameraShake.h"
 #include "TimerManager.h"
 
 static int32 DebugWeaponDrawing = 0;
@@ -28,8 +29,14 @@ ASurvivalWeapon::ASurvivalWeapon()
 	TracerTargetName = "Target";
 
 	BaseDamage = 20.0f;
-	BulletSpread = 2.0f;
+	BulletSpread = 1.0f;
 	RateOfFire = 600;
+
+	SetReplicates(true);
+	bReplicates = true;
+
+	NetUpdateFrequency = 66.0f;
+	MinNetUpdateFrequency = 33.0f;
 
 }
 
@@ -56,6 +63,16 @@ void ASurvivalWeapon::PlayFireEffects(FVector TraceEnd)
 		if (TracerComp)
 		{
 			TracerComp->SetVectorParameter(TracerTargetName, TraceEnd);
+		}
+	}
+
+	APawn* MyOwner = Cast<APawn>(GetOwner());
+	if (MyOwner)
+	{
+		APlayerController* MyPC = Cast<APlayerController>(MyOwner->GetController());
+		if (MyPC)
+		{
+			MyPC->ClientPlayCameraShake(FireCamShake);
 		}
 	}
 }
@@ -87,6 +104,15 @@ void ASurvivalWeapon::PlayImpactEffects(EPhysicalSurface SurfaceType, FVector Im
 
 void ASurvivalWeapon::Fire()
 {
+
+	if (!HasAuthority())
+	{
+		ServerFire();
+		
+	}
+
+
+
 	AActor* MyOwner = GetOwner();
 	if (MyOwner)
 	{
@@ -124,7 +150,7 @@ void ASurvivalWeapon::Fire()
 			float ActualDamage = BaseDamage;
 			if (SurfaceType == SURFACE_FLESHVULNERABLE)
 			{
-				ActualDamage *= 4.0f;
+				ActualDamage *= 5.0f;
 			}
 
 			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), MyOwner, DamageType);
@@ -142,12 +168,35 @@ void ASurvivalWeapon::Fire()
 
 		PlayFireEffects(TracerEndPoint);
 
-		HitScanTrace.TraceTo = TracerEndPoint;
-		HitScanTrace.SurfaceType = SurfaceType;
-
+		if (HasAuthority())
+		{
+			HitScanTrace.TraceTo = TracerEndPoint;
+			HitScanTrace.SurfaceType = SurfaceType;
+		}
 		LastFireTime = GetWorld()->TimeSeconds;
 
 	}
+}
+
+
+
+void ASurvivalWeapon::ServerFire_Implementation()
+{
+	Fire();
+
+
+}
+
+bool ASurvivalWeapon::ServerFire_Validate()
+{
+	return true;
+}
+
+void ASurvivalWeapon::OnRep_HitScanTrace()
+{
+	// Play cosmetic FX
+	PlayFireEffects(HitScanTrace.TraceTo);
+	PlayImpactEffects(HitScanTrace.SurfaceType, HitScanTrace.TraceTo);
 }
 
 void ASurvivalWeapon::StartFire()
@@ -162,5 +211,10 @@ void ASurvivalWeapon::CeaseFire()
 	GetWorldTimerManager().ClearTimer(TH_TimeBetweenShots);
 }
 
+void ASurvivalWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME_CONDITION(ASurvivalWeapon, HitScanTrace, COND_SkipOwner);
+}
 

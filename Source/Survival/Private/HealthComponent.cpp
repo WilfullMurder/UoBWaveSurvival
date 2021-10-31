@@ -11,9 +11,12 @@ UHealthComponent::UHealthComponent()
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
 	DefaultHealth = 100;
+
 	bIsDead = false;
 
 	TeamNum = 255;
+
+	SetIsReplicatedByDefault(true);
 	// ...
 }
 
@@ -22,12 +25,17 @@ UHealthComponent::UHealthComponent()
 void UHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
 
+	
+	//only hook if server
 	AActor* MyOwner = GetOwner();
-	if (MyOwner)
+	if (MyOwner && MyOwner->HasAuthority())
 	{
 		MyOwner->OnTakeAnyDamage.AddDynamic(this, &UHealthComponent::HandleTakeAnyDamage);
+
 	}
+	Health = DefaultHealth;
 	
 }
 
@@ -50,7 +58,9 @@ void UHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, c
 	// Update health clamped
 	Health = FMath::Clamp(Health - Damage, 0.0f, DefaultHealth);
 
-	UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(Health));
+	UE_LOG(LogTemp, Log, TEXT("%s Damages %s for: %s"), *DamageCauser->GetName(), *DamagedActor->GetName(), *FString::SanitizeFloat(Damage));
+
+	UE_LOG(LogTemp, Log, TEXT("%s Health Changed: %s"), *DamagedActor->GetName(), *FString::SanitizeFloat(Health));
 
 	bIsDead = Health <= 0.0f;
 
@@ -103,3 +113,11 @@ bool UHealthComponent::IsFriendly(AActor* ActorA, AActor* ActorB)
 	return false;
 }
 
+
+void UHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UHealthComponent, Health);
+
+}

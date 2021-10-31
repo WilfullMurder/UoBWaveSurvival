@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Net/UnrealNetwork.h"
 #include "SurvivalGameCharacter.generated.h"
 
 
@@ -20,6 +21,7 @@ class SURVIVAL_API ASurvivalGameCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	ASurvivalGameCharacter();
+	
 
 protected:
 	// Called when the game starts or when spawned
@@ -58,9 +60,6 @@ protected:
 
 	void EndZoom();
 
-	UPROPERTY()
-		ASurvivalWeapon* CurrentWeapon;
-
 	UPROPERTY(EditDefaultsOnly, Category = "Player")
 		TSubclassOf<ASurvivalWeapon> StarterWeaponClass;
 
@@ -71,9 +70,9 @@ protected:
 	UFUNCTION()
 		void OnHealthChanged(UHealthComponent* OwningHealthComp, float Health, float HealthDelta, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-	/* Pawn died previously */
-	UPROPERTY(BlueprintReadOnly, Category = "Player")
-		bool bDied;
+
+
+
 
 public:	
 	// Called every frame
@@ -83,6 +82,13 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	virtual FVector GetPawnViewLocation() const override;
+
+	UPROPERTY(Replicated)
+		ASurvivalWeapon* CurrentWeapon;
+
+	/* Pawn died previously */
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Player")
+		bool bDied;
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void StartFire();

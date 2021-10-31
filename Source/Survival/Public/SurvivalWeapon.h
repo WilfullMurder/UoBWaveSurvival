@@ -4,11 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Net/UnrealNetwork.h"
 #include "SurvivalWeapon.generated.h"
 
 class USkeletalMeshComponent;
 class UDamageType;
 class UParticleSystem;
+class UCameraShake;
 
 // Contains information of a single hitscan weapon linetrace
 USTRUCT() struct FHitScanTrace
@@ -63,6 +65,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 		UParticleSystem* TracerEffect;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+		TSubclassOf<UCameraShake> FireCamShake;
+
 
 
 
@@ -72,8 +77,8 @@ protected:
 
 	void Fire();
 
-	/*UFUNCTION(Server, Reliable, WithValidation)
-		void ServerFire();*/
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerFire();
 
 	FTimerHandle TH_TimeBetweenShots;
 
@@ -90,11 +95,11 @@ protected:
 	// Derived from RateOfFire
 	float TimeBetweenShots;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_HitScanTrace)
+	UPROPERTY(ReplicatedUsing = OnRep_HitScanTrace)
 		FHitScanTrace HitScanTrace;
 
-	/*UFUNCTION()
-		void OnRep_HitScanTrace();*/
+	UFUNCTION()
+		void OnRep_HitScanTrace();
 
 
 public:	
