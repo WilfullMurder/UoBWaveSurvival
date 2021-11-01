@@ -105,8 +105,11 @@ void ASurvivalGameCharacter::OnHealthChanged(UHealthComponent* OwningHealthComp,
 		// Die!
 		bDied = true;
 
+		CurrentWeapon->SetCollision();
+
 		GetMovementComponent()->StopMovementImmediately();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 
 		DetachFromControllerPendingDestroy();
 

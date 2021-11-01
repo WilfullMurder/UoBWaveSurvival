@@ -83,7 +83,7 @@ public:
 
 	virtual FVector GetPawnViewLocation() const override;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Weapon")
 		ASurvivalWeapon* CurrentWeapon;
 
 	/* Pawn died previously */

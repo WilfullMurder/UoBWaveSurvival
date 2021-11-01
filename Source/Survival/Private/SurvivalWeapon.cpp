@@ -7,6 +7,7 @@
 #include "Particles/ParticleSystem.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/BoxComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Survival/Survival.h"
 #include "Camera/CameraShake.h"
@@ -24,6 +25,10 @@ ASurvivalWeapon::ASurvivalWeapon()
 {
 	MeshComp = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("MeshComp"));
 	RootComponent = MeshComp;
+
+	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
+	BoxCollision->SetupAttachment(MeshComp);
+	BoxCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	MuzzleSocketName = "MuzzleSocket";
 	TracerTargetName = "Target";
@@ -43,7 +48,7 @@ ASurvivalWeapon::ASurvivalWeapon()
 // Called when the game starts or when spawned
 void ASurvivalWeapon::BeginPlay()
 {
-		
+	BoxCollision->SetBoxExtent(CollisionExtent);
 	TimeBetweenShots = 60 / RateOfFire;
 
 }
@@ -113,9 +118,12 @@ void ASurvivalWeapon::Fire()
 
 
 
-	AActor* MyOwner = GetOwner();
+	AActor* MyOwner = GetOwner();	
 	if (MyOwner)
 	{
+
+		
+
 		FVector EyeLocation;
 		FRotator EyeRotation;
 		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
@@ -197,6 +205,13 @@ void ASurvivalWeapon::OnRep_HitScanTrace()
 	// Play cosmetic FX
 	PlayFireEffects(HitScanTrace.TraceTo);
 	PlayImpactEffects(HitScanTrace.SurfaceType, HitScanTrace.TraceTo);
+}
+
+void ASurvivalWeapon::SetCollision()
+{
+	if (BoxCollision->GetCollisionEnabled() == false) BoxCollision->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	else BoxCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 }
 
 void ASurvivalWeapon::StartFire()
