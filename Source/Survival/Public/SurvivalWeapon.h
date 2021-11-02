@@ -11,6 +11,7 @@ class USkeletalMeshComponent;
 class UDamageType;
 class UParticleSystem;
 class UCameraShake;
+class UBoxComponent;
 
 // Contains information of a single hitscan weapon linetrace
 USTRUCT() struct FHitScanTrace
@@ -70,6 +71,11 @@ protected:
 
 
 
+	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Components")
+		UBoxComponent* BoxCollision;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
+	FVector CollisionExtent;
 
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
@@ -105,6 +111,7 @@ protected:
 public:	
 
 
+	void SetCollision();
 
 	void StartFire();
 
