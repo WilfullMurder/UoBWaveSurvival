@@ -69,6 +69,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 		TSubclassOf<UCameraShake> FireCamShake;
 
+	
 
 
 	UPROPERTY(VisibleAnyWhere, BlueprintReadOnly, Category = "Components")
@@ -94,9 +95,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 		float RateOfFire;
 
-	/* Bullet Spread in Degrees */
-	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin = 0.0f))
-		float BulletSpread;
 
 	// Derived from RateOfFire
 	float TimeBetweenShots;
@@ -111,10 +109,23 @@ protected:
 public:	
 
 
+	/* Bullet Spread in Degrees */
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin = 0.0f))
+		float BulletSpread;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+		int32 CurrentClip;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+		int32 MaxClip;
+
 	void SetCollision();
 
 	void StartFire();
 
 	void CeaseFire();
+
+	void Reload();
+
+
 
 };

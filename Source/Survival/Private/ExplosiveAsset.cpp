@@ -59,7 +59,7 @@ void AExplosiveAsset::OnHealthChanged(UHealthComponent* OwningHealthComp, float 
 		//Apply radial force to nearby physics actors
 		RadialForceComponent->FireImpulse();
 
-		//@@TODO:
+		
 		//Apply Radial Damage
 
 		TArray<AActor*> IgnoredActors;

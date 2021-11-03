@@ -6,6 +6,10 @@
 #include "GameFramework/GameState.h"
 #include "SurvivalGameState.generated.h"
 
+
+
+
+
 /**
  * 
  */
@@ -13,5 +17,7 @@ UCLASS()
 class SURVIVAL_API ASurvivalGameState : public AGameState
 {
 	GENERATED_BODY()
+
+
 	
 };

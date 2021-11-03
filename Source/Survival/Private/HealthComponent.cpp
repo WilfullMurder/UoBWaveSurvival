@@ -2,7 +2,7 @@
 
 
 #include "HealthComponent.h"
-#include "Survival\SurvivalGameMode.h"
+#include "SurvivalGameModeBase.h"
 
 // Sets default values for this component's properties
 UHealthComponent::UHealthComponent()
@@ -68,10 +68,11 @@ void UHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, c
 
 	if (bIsDead)
 	{
-		ASurvivalGameMode* GM = Cast<ASurvivalGameMode>(GetWorld()->GetAuthGameMode());
+		ASurvivalGameModeBase* GM = Cast<ASurvivalGameModeBase>(GetWorld()->GetAuthGameMode());
 		if (GM)
 		{
-			//GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
+			
+			GM->OnActorKilled.Broadcast(GetOwner(), DamageCauser, InstigatedBy);
 		}
 	}
 
@@ -110,7 +111,23 @@ void UHealthComponent::Heal(float HealAmount)
 
 bool UHealthComponent::IsFriendly(AActor* ActorA, AActor* ActorB)
 {
-	return false;
+	if (ActorA == nullptr || ActorB == nullptr)
+	{
+		return true;
+	}
+
+
+	UHealthComponent* HealthCompA = Cast<UHealthComponent>(ActorA->GetComponentByClass(UHealthComponent::StaticClass()));
+	UHealthComponent* HealthCompB = Cast<UHealthComponent>(ActorB->GetComponentByClass(UHealthComponent::StaticClass()));
+
+	if (HealthCompA == nullptr || HealthCompB == nullptr)
+	{
+		return true;
+	}
+
+
+
+	return HealthCompA->TeamNum == HealthCompB->TeamNum;
 }
 
 

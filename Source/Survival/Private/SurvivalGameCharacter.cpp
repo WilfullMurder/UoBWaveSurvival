@@ -35,6 +35,8 @@ ASurvivalGameCharacter::ASurvivalGameCharacter()
 
 	bReplicates = true;
 
+
+
 }
 
 
@@ -61,9 +63,24 @@ void ASurvivalGameCharacter::BeginPlay()
 		}
 
 		HealthComponent->OnHealthChanged.AddDynamic(this, &ASurvivalGameCharacter::OnHealthChanged);
+
+
+		if (bIsEnemy)
+		{
+			float Min = 4.0f;
+			float Max = 5.0f;
+
+			if (bIsElite)
+			{
+				Min = 1.0f;
+				Max = Max / 2;
+			}
+
+			//Give the enemy slightly worse aim
+			CurrentWeapon->BulletSpread += FMath::RandRange(Min, Max);
+		}
 	}
 
-	
 	
 }
 
@@ -117,6 +134,16 @@ void ASurvivalGameCharacter::OnHealthChanged(UHealthComponent* OwningHealthComp,
 	}
 }
 
+void ASurvivalGameCharacter::Reload()
+{
+	if (TotalAmmo > 0)
+	{
+			TotalAmmo -= CurrentWeapon->MaxClip + CurrentWeapon->CurrentClip;
+			//TODO@:: Play Reload animation
+			CurrentWeapon->Reload();
+	}
+}
+
 // Called every frame
 void ASurvivalGameCharacter::Tick(float DeltaTime)
 {
@@ -152,6 +179,8 @@ void ASurvivalGameCharacter::SetupPlayerInputComponent(UInputComponent* PlayerIn
 
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ASurvivalGameCharacter::Jump);
+
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ASurvivalGameCharacter::Reload);
 }
 
 FVector ASurvivalGameCharacter::GetPawnViewLocation() const
