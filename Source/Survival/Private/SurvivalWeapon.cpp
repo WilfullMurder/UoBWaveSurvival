@@ -36,6 +36,7 @@ ASurvivalWeapon::ASurvivalWeapon()
 	BaseDamage = 20.0f;
 	BulletSpread = 1.0f;
 	RateOfFire = 600;
+	MaxClip = 30;
 
 	SetReplicates(true);
 	bReplicates = true;
@@ -50,7 +51,7 @@ void ASurvivalWeapon::BeginPlay()
 {
 	BoxCollision->SetBoxExtent(CollisionExtent);
 	TimeBetweenShots = 60 / RateOfFire;
-
+	CurrentClip = MaxClip;
 }
 
 void ASurvivalWeapon::PlayFireEffects(FVector TraceEnd)
@@ -121,68 +122,75 @@ void ASurvivalWeapon::Fire()
 	AActor* MyOwner = GetOwner();	
 	if (MyOwner)
 	{
-
 		
 
-		FVector EyeLocation;
-		FRotator EyeRotation;
-		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
-
-		FVector ShotDirection = EyeRotation.Vector();
-
-		// Bullet Spread
-		float HalfRad = FMath::DegreesToRadians(BulletSpread);
-		ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
-
-		FVector TraceEnd = EyeLocation + (ShotDirection * 10000);
-
-		FCollisionQueryParams QueryParams;
-		QueryParams.AddIgnoredActor(MyOwner);
-		QueryParams.AddIgnoredActor(this);
-		QueryParams.bTraceComplex = true;
-		QueryParams.bReturnPhysicalMaterial = true;
-
-		// Particle "Target" parameter
-		FVector TracerEndPoint = TraceEnd;
-
-		EPhysicalSurface SurfaceType = SurfaceType_Default;
-
-		FHitResult Hit;
-		if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams))
+		if (CurrentClip > 0)
 		{
-			// Blocking hit! Process damage
-			AActor* HitActor = Hit.GetActor();
+			CurrentClip--;
 
-			SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+			FVector EyeLocation;
+			FRotator EyeRotation;
+			MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
-			float ActualDamage = BaseDamage;
-			if (SurfaceType == SURFACE_FLESHVULNERABLE)
+			FVector ShotDirection = EyeRotation.Vector();
+
+			// Bullet Spread
+			float HalfRad = FMath::DegreesToRadians(BulletSpread);
+			ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
+
+			FVector TraceEnd = EyeLocation + (ShotDirection * 10000);
+
+			FCollisionQueryParams QueryParams;
+			QueryParams.AddIgnoredActor(MyOwner);
+			QueryParams.AddIgnoredActor(this);
+			QueryParams.bTraceComplex = true;
+			QueryParams.bReturnPhysicalMaterial = true;
+
+			// Particle "Target" parameter
+			FVector TracerEndPoint = TraceEnd;
+
+			EPhysicalSurface SurfaceType = SurfaceType_Default;
+
+			FHitResult Hit;
+			if (GetWorld()->LineTraceSingleByChannel(Hit, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams))
 			{
-				ActualDamage *= 5.0f;
+				// Blocking hit! Process damage
+				AActor* HitActor = Hit.GetActor();
+
+				SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hit.PhysMaterial.Get());
+
+				float ActualDamage = BaseDamage;
+				if (SurfaceType == SURFACE_FLESHVULNERABLE)
+				{
+					ActualDamage *= 5.0f;
+				}
+
+				UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), MyOwner, DamageType);
+
+				PlayImpactEffects(SurfaceType, Hit.ImpactPoint);
+
+				TracerEndPoint = Hit.ImpactPoint;
+
 			}
 
-			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hit, MyOwner->GetInstigatorController(), MyOwner, DamageType);
+			if (DebugWeaponDrawing > 0)
+			{
+				DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::Red, false, 1.0f, 0, 1.0f);
+			}
 
-			PlayImpactEffects(SurfaceType, Hit.ImpactPoint);
+			PlayFireEffects(TracerEndPoint);
 
-			TracerEndPoint = Hit.ImpactPoint;
-
+			if (HasAuthority())
+			{
+				HitScanTrace.TraceTo = TracerEndPoint;
+				HitScanTrace.SurfaceType = SurfaceType;
+			}
+			LastFireTime = GetWorld()->TimeSeconds;
 		}
-
-		if (DebugWeaponDrawing > 0)
+		else
 		{
-			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::Red, false, 1.0f, 0, 1.0f);
+			Reload();
 		}
-
-		PlayFireEffects(TracerEndPoint);
-
-		if (HasAuthority())
-		{
-			HitScanTrace.TraceTo = TracerEndPoint;
-			HitScanTrace.SurfaceType = SurfaceType;
-		}
-		LastFireTime = GetWorld()->TimeSeconds;
-
 	}
 }
 
@@ -225,6 +233,12 @@ void ASurvivalWeapon::CeaseFire()
 {
 	GetWorldTimerManager().ClearTimer(TH_TimeBetweenShots);
 }
+
+void ASurvivalWeapon::Reload()
+{
+	CurrentClip = MaxClip;
+}
+
 
 void ASurvivalWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

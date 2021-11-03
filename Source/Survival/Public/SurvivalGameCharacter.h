@@ -35,6 +35,8 @@ protected:
 
 	void EndCrouch();
 
+	void Reload();
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 		UCameraComponent* CameraComponent;
@@ -74,6 +76,7 @@ protected:
 
 
 
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -95,5 +98,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Player")
 		void CeaseFire();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player")
+		bool bIsEnemy;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player")
+		bool bIsElite;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Weapon")
+		int32 TotalAmmo;
 
 };
